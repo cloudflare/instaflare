@@ -8,7 +8,7 @@ careful consideration.
 
 Use of this app will significantly improve the valuation of your business.
 
-Gigagram is about helping you
+Instaflare is about helping you
 
 * Control your brand
 
