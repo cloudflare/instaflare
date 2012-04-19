@@ -1,0 +1,74 @@
+{
+    "name": "Instaflare",
+    "description": "Increases the value of your site by creating a consistent visual feel",
+    "keywords": [
+        "webmaster"
+    ],
+    "version": "0.0.2",
+    "contributors": [
+        {
+            "name": "Michael Sofaer",
+            "email": "michael@cloudflare.com"
+        },
+        {
+            "name": "Chris Joel",
+            "email": "chris@cloudflare.com"
+        }
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mikesofaer/gigagram.git"
+    },
+    "main": "./public/javascripts/instaflare.js",
+    "dependencies": {
+        "jquery": "~1.7"
+    },
+    "licenses": [
+        {
+            "type": "MIT",
+            "url": "http://www.opensource.org/licenses/MIT"
+        }
+    ],
+    "implements": "AMD",
+    "scripts": {},
+    "config": {
+        "details" : {
+            "Category": "Styling",
+            "Language": "Universal",
+            "Price": "Free ... for now",
+            "Restrictions": "None"
+        },
+        "assets": {},
+        "payment": {},
+        "interface": [
+            {
+                "id": "filter",
+                "name": "Choose your Style",
+                "description": "These highly tested filters will all make your site more valuable. Choose the one that's right for you!",
+                "type": "select",
+                "options": [
+                    {
+                        "label": "Hangover: Everything's too bright! Argh, my head.",
+                        "value": "hangover"
+                    },
+                    {
+                        "label": "Drugstore: Perhaps you shouldn't have gone for the cheapest possible photo printing",
+                        "value": "drugstore"
+                    },
+                    {
+                        "label": "Madison: You like to think you're Don Draper, but you're actually Pete Campbell",
+                        "value": "madison"
+                    },
+                    {
+                        "label": "Jaundice: The relaxing yellow hue that accompanies a severe liver problem",
+                    	"value": "jaundice"
+                    },
+                    {
+                        "label": "Blue Rinse: You tried to wash your socks and your white shirts together, didn't you?",
+                    	"value": "bluerinse"
+                    }
+                ]
+            }
+        ]
+    }
+}
