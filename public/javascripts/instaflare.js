@@ -189,9 +189,9 @@ CloudFlare.define("instaflare", ["cloudflare/iterator", "cloudflare/dom", "cloud
         }
     }
 
-    dom.addEventListener(window, 'load', function() {
+    dom.onLoad.then(function() {
         instaflare.flare(_config.filter);
-    }, true);
+    });
 
     return instaflare;
 });
