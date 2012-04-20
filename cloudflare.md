@@ -17,3 +17,5 @@ Instaflare is about helping you
 * Target young users on the go
 
 Now any site can look like a billion bucks!
+
+Inspired by Alexandros Michael -  [http://github.com/alexmic/filtrr](http://egithub.com/alexmic/filtrr)
