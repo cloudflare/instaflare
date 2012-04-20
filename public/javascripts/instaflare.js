@@ -12,7 +12,7 @@ CloudFlare.define("instaflare", ["cloudflare/iterator", "cloudflare/dom", "cloud
         }
     };
 
-    instaflare.createFilter = function(getPixel) {
+    instaflare.createFilter = function(imageData, getPixel) {
         function processPixel(data, i,j,width, options){
             var index = (i*width*4) + (j*4),
                         rgb = getPixel(
@@ -29,92 +29,104 @@ CloudFlare.define("instaflare", ["cloudflare/iterator", "cloudflare/dom", "cloud
                     data[index + 3] = rgb.a;
         }
 
-        return function(canvas) {
-            var width = canvas.width,
-                height = canvas.height,
-                context = canvas.getContext('2d'),
-                imageData = context.getImageData(0, 0, width, height),
+        return function(options) {
+            var width = imageData.width,
+                height = imageData.height,
                 data = imageData.data,
-                options = Array.prototype.slice.call(arguments, 1),
                 i,
                 j;
 
             for(i = 0; i < height; i++)
                 for(j = 0; j < width; j++)
                     processPixel(data, i, j,width, options);
-            context.putImageData(imageData, 0, 0);
-            return instaflare.filterParts;
         };
     }
 
-    instaflare.filterParts = {
-        saturation: instaflare.createFilter(function(r, g, b, a, args) {
-            var avg = ( r + g + b ) / 3,
-                t = args[0];
+    instaflare.createFilterableData = function(canvas) {
+        function createFilter(getPixel){
+            return function() {
+                try { throw 'break'; } catch(e) {}
+                instaflare.createFilter(imageData, getPixel)(arguments);
+                return chainable;
+            };
+        }
 
-            return {
-                r: instaflare.filterHelpers.safe(avg + t * (r - avg)),
-                g: instaflare.filterHelpers.safe(avg + t * (g - avg)),
-                b: instaflare.filterHelpers.safe(avg + t * (b - avg)),
-                a: a
-            };
-        }),
-        contrast: instaflare.createFilter(function(r, g, b, a, args) {
-            var val = args[0];
+        var context = canvas.getContext('2d'),
+            width = canvas.width,
+            height = canvas.height,
+            imageData = context.getImageData(0, 0, width, height),
+            chainable = {
+                imageData: imageData,
+                saturation: createFilter(function(r, g, b, a, args) {
+                    var avg = ( r + g + b ) / 3,
+                        t = args[0];
 
-            return {
-                r: instaflare.filterHelpers.safe(255 * instaflare.filterHelpers.contrast(r / 255, val)),
-                g: instaflare.filterHelpers.safe(255 * instaflare.filterHelpers.contrast(g / 255, val)),
-                b: instaflare.filterHelpers.safe(255 * instaflare.filterHelpers.contrast(b / 255, val)),
-                a: a
-            };
-        }),
-        tint: instaflare.createFilter(function(r, g, b, a, args) {
-            var maxRGB = args[1],
-                minRGB = args[0];
-            return {
-                r: instaflare.filterHelpers.safe((r - minRGB[0]) * ((255 / (maxRGB[0] - minRGB[0])))),
-                g: instaflare.filterHelpers.safe((g - minRGB[1]) * ((255 / (maxRGB[1] - minRGB[1])))),
-                b: instaflare.filterHelpers.safe((b - minRGB[2]) * ((255 / (maxRGB[2] - minRGB[2])))),
-                a: a
-            };
-        }),
-        posterize : instaflare.createFilter(function(r,g,b,a,args) {
-            var step = Math.floor(255 / args[0]);
-            return {
-                r: instaflare.filterHelpers.safe(Math.floor(r / step) * step),
-                g: instaflare.filterHelpers.safe(Math.floor(g / step) * step),
-                b: instaflare.filterHelpers.safe(Math.floor(b / step) * step),
-                a: a
-            };
-        }),
-        grayscale : instaflare.createFilter(function(r,g,b,a) {
-            var avg = (r + g + b) / 3;
-            return {
-                r: instaflare.filterHelpers.safe(avg),
-                g: instaflare.filterHelpers.safe(avg),
-                b: instaflare.filterHelpers.safe(avg),
-                a: a
-            };
-        }),
-        bias : instaflare.createFilter(function(r,g,b,a,args) {
-            var val = args[0];
-                return {
-                    r: instaflare.filterHelpers.safe(r * instaflare.filterHelpers.bias(r / 255, val)),
-                    g: instaflare.filterHelpers.safe(g * instaflare.filterHelpers.bias(g / 255, val)),
-                    b: instaflare.filterHelpers.safe(b * instaflare.filterHelpers.bias(b / 255, val)),
-                    a: a
-                };
-        }),
-        brightness : instaflare.createFilter(function(r,g,b,a,args) {
-            var val = args[0];
-            return {
-                r: instaflare.filterHelpers.safe(r + val),
-                g: instaflare.filterHelpers.safe(g + val),
-                b: instaflare.filterHelpers.safe(b + val),
-                a: a
-            };
-        })
+                    return {
+                        r: instaflare.filterHelpers.safe(avg + t * (r - avg)),
+                        g: instaflare.filterHelpers.safe(avg + t * (g - avg)),
+                        b: instaflare.filterHelpers.safe(avg + t * (b - avg)),
+                        a: a
+                    };
+                }),
+                contrast: createFilter(function(r, g, b, a, args) {
+                    var val = args[0];
+
+                    return {
+                        r: instaflare.filterHelpers.safe(255 * instaflare.filterHelpers.contrast(r / 255, val)),
+                        g: instaflare.filterHelpers.safe(255 * instaflare.filterHelpers.contrast(g / 255, val)),
+                        b: instaflare.filterHelpers.safe(255 * instaflare.filterHelpers.contrast(b / 255, val)),
+                        a: a
+                    };
+                }),
+                tint: createFilter(function(r, g, b, a, args) {
+                    var maxRGB = args[1],
+                        minRGB = args[0];
+                    return {
+                        r: instaflare.filterHelpers.safe((r - minRGB[0]) * ((255 / (maxRGB[0] - minRGB[0])))),
+                        g: instaflare.filterHelpers.safe((g - minRGB[1]) * ((255 / (maxRGB[1] - minRGB[1])))),
+                        b: instaflare.filterHelpers.safe((b - minRGB[2]) * ((255 / (maxRGB[2] - minRGB[2])))),
+                        a: a
+                    };
+                }),
+                posterize : createFilter(function(r,g,b,a,args) {
+                    var step = Math.floor(255 / args[0]);
+                    return {
+                        r: instaflare.filterHelpers.safe(Math.floor(r / step) * step),
+                        g: instaflare.filterHelpers.safe(Math.floor(g / step) * step),
+                        b: instaflare.filterHelpers.safe(Math.floor(b / step) * step),
+                        a: a
+                    };
+                }),
+                grayscale : createFilter(function(r,g,b,a) {
+                    var avg = (r + g + b) / 3;
+                    return {
+                        r: instaflare.filterHelpers.safe(avg),
+                        g: instaflare.filterHelpers.safe(avg),
+                        b: instaflare.filterHelpers.safe(avg),
+                        a: a
+                    };
+                }),
+                bias : createFilter(function(r,g,b,a,args) {
+                    var val = args[0];
+                        return {
+                            r: instaflare.filterHelpers.safe(r * instaflare.filterHelpers.bias(r / 255, val)),
+                            g: instaflare.filterHelpers.safe(g * instaflare.filterHelpers.bias(g / 255, val)),
+                            b: instaflare.filterHelpers.safe(b * instaflare.filterHelpers.bias(b / 255, val)),
+                            a: a
+                        };
+                }),
+                brightness : createFilter(function(r,g,b,a,args) {
+                    var val = args[0];
+                    return {
+                        r: instaflare.filterHelpers.safe(r + val),
+                        g: instaflare.filterHelpers.safe(g + val),
+                        b: instaflare.filterHelpers.safe(b + val),
+                        a: a
+                    };
+                })
+            }
+
+        return chainable;
     }
 
     instaflare.canvasFromImage = function(image) {
@@ -134,35 +146,35 @@ CloudFlare.define("instaflare", ["cloudflare/iterator", "cloudflare/dom", "cloud
     };
 
     instaflare.filters = {
-        drugstore: function(canvas) {
-            instaflare.filterParts
-                .saturation(canvas, 0.3)
-                .posterize(canvas, 70)
-                .tint(canvas, [50, 35, 10], [190, 190, 230]);
+        drugstore: function(data) {
+            return data
+                .saturation(0.3)
+                .posterize(70)
+                .tint([50, 35, 10], [190, 190, 230]);
         },
-        hangover: function(canvas) {
-            instaflare.filterParts
-                .tint(canvas, [60, 35, 10], [170, 170, 230])
-                .saturation(canvas, 0.8);
+        hangover: function(data) {
+            return data
+                .tint([60, 35, 10], [170, 170, 230])
+                .saturation(0.8);
         },
-        madison: function(canvas) {
-            instaflare.filterParts
-                .grayscale(canvas)
-                .tint(canvas,[60,60,30], [210, 210, 210]);
+        madison: function(data) {
+            return data
+                .grayscale()
+                .tint([60,60,30], [210, 210, 210]);
         },
-        bluerinse: function(canvas) {
-            instaflare.filterParts
-                .tint(canvas, [30, 40, 30], [120, 170, 210])
-                .contrast(canvas, 0.75)
-                .bias(canvas, 1)
-                .saturation(canvas, 0.6)
-                .brightness(canvas, 20);
+        bluerinse: function(data) {
+            return data
+                .tint([30, 40, 30], [120, 170, 210])
+                .contrast(0.75)
+                .bias(1)
+                .saturation(0.6)
+                .brightness(20);
         },
-        jaundice: function(canvas) {
-            instaflare.filterParts
-                .saturation(canvas, 0.4)
-                .contrast(canvas, 0.75)
-                .tint(canvas, [20, 35, 10], [150, 160, 230]);
+        jaundice: function(data) {
+            return data
+                .saturation(0.4)
+                .contrast(0.75)
+                .tint([20, 35, 10], [150, 160, 230]);
         }
     }
 
@@ -173,7 +185,10 @@ CloudFlare.define("instaflare", ["cloudflare/iterator", "cloudflare/dom", "cloud
 
     instaflare.processImage = function(image, filter) {
         var canvas = instaflare.canvasFromImage(image);
-        instaflare.filters[filter](canvas);
+        var data = instaflare.createFilterableData(canvas);
+        data = instaflare.filters[filter](data);
+        context = canvas.getContext('2d');
+        context.putImageData(data.imageData, 0, 0);
         canvas.applyToImage();
     }
 
@@ -195,4 +210,3 @@ CloudFlare.define("instaflare", ["cloudflare/iterator", "cloudflare/dom", "cloud
 
     return instaflare;
 });
-
