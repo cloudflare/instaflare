@@ -1,4 +1,4 @@
-CloudFlare.define("instaflare", ["cloudflare/iterator", "cloudflare/dom", "cloudflare/console", "instaflare/config"], function(iterator, dom, console, _config) {
+CloudFlare.define("instaflare", ["cloudflare/deferred", "cloudflare/iterator", "cloudflare/dom", "cloudflare/console", "instaflare/config"], function(deferred, iterator, dom, console, _config) {
     var instaflare = {};
     instaflare.filterHelpers = {
         safe: function(i) {
@@ -194,12 +194,26 @@ CloudFlare.define("instaflare", ["cloudflare/iterator", "cloudflare/dom", "cloud
 
     instaflare.flare = function(filter){
         if(instaflare.canvasIsSupported) {
+
             var images = document.getElementsByTagName('img');
             var sliced = Array.prototype.slice.call(images);
+            var queue = deferred.ref();
+
             iterator.forEach(sliced, function(image) {
-                setTimeout(function() {
+
+                console.log('foo')
+                var span = document.createElement("span"),
+                    caption = document.createTextNode('Hipsterizing...');
+
+                span.appendChild(caption);
+                dom.setAttribute(span, "style", "font-family:'Helvetica Neue';font-weight:200;color:#fff;text-shadow:1px 1px 1px #000;position:absolute;left:" + (image.offsetLeft + 5) + "px;top:" + (image.offsetTop + 5) + "px;z-index:99999;");
+
+                image.parentNode.insertBefore(span, image);
+
+                queue = queue.then(function() {
                     instaflare.processImage(image, filter);
-                }, 0);
+                    span.parentNode.removeChild(span);
+                })
             });
         }
     }
