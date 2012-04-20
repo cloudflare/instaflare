@@ -1,4 +1,4 @@
-CloudFlare.define("instaflare", ["cloudflare/deferred", "cloudflare/iterator", "cloudflare/dom", "cloudflare/console", "instaflare/config"], function(deferred, iterator, dom, console, _config) {
+CloudFlare.define("instaflare", ["cloudflare/deferred", "cloudflare/iterator", "cloudflare/dom", "cloudflare/console", "cloudflare/path", "instaflare/config"], function(deferred, iterator, dom, console, path, _config) {
     var instaflare = {};
     instaflare.filterHelpers = {
         safe: function(i) {
@@ -195,25 +195,35 @@ CloudFlare.define("instaflare", ["cloudflare/deferred", "cloudflare/iterator", "
     instaflare.flare = function(filter){
         if(instaflare.canvasIsSupported) {
 
+            function sameZone(src, zone) {
+                var zoneRegExp = new RegExp(zone + '$')
+                var srcHostName = path.parseURL(path.resolveFullURL(src)).host
+                return zoneRegExp.test(srcHostName)
+            }
+
             var images = document.getElementsByTagName('img');
             var sliced = Array.prototype.slice.call(images);
             var queue = deferred.ref();
+            var zone = _config ? _config.zone : "unknown";
 
             iterator.forEach(sliced, function(image) {
+                if (sameZone(dom.getAttribute(image, 'src'), zone)) {
 
-                console.log('foo')
-                var span = document.createElement("span"),
-                    caption = document.createTextNode('Hipsterizing...');
+                    var span = document.createElement("span"),
+                        caption = document.createTextNode('Hipsterizing...');
 
-                span.appendChild(caption);
-                dom.setAttribute(span, "style", "font-family:'Helvetica Neue';font-weight:200;color:#fff;text-shadow:1px 1px 1px #000;position:absolute;left:" + (image.offsetLeft + 5) + "px;top:" + (image.offsetTop + 5) + "px;z-index:99999;");
+                    span.appendChild(caption);
+                    dom.setAttribute(span, "style", "font-family:'Helvetica Neue';font-weight:200;color:#fff;text-shadow:1px 1px 1px #000;position:absolute;left:" + (image.offsetLeft + 5) + "px;top:" + (image.offsetTop + 5) + "px;z-index:99999;");
 
-                image.parentNode.insertBefore(span, image);
+                    image.parentNode.insertBefore(span, image);
 
-                queue = queue.then(function() {
-                    instaflare.processImage(image, filter);
-                    span.parentNode.removeChild(span);
-                })
+                    queue = queue.then(function() {
+                        instaflare.processImage(image, filter);
+                        span.parentNode.removeChild(span);
+                    })
+                } else {
+                    console.log(dom.getAttribute(image, 'src') + " is not in the same zone as " + zone + ", skipping")
+                }
             });
         }
     }
