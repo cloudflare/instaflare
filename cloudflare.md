@@ -18,4 +18,4 @@ Instaflare is about helping you
 
 Now any site can look like a billion bucks!
 
-Inspired by Alexandros Michael -  [http://github.com/alexmic/filtrr](http://egithub.com/alexmic/filtrr)
+Inspired by Alexandros Michael -  [http://github.com/alexmic/filtrr](http://github.com/alexmic/filtrr)
