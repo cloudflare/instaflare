@@ -1,4 +1,4 @@
-CloudFlare.define("instaflare", ["cloudflare/deferred", "cloudflare/iterator", "cloudflare/dom", "cloudflare/console", "cloudflare/path", "instaflare/config"], function(deferred, iterator, dom, console, path, _config) {
+CloudFlare.define("instaflare", ["cloudflare/deferred", "cloudflare/iterator", "cloudflare/dom", "cloudflare/console", "cloudflare/path", "cloudflare/config", "instaflare/config"], function(deferred, iterator, dom, console, path, config, _config) {
     var instaflare = {};
     instaflare.filterHelpers = {
         safe: function(i) {
@@ -198,16 +198,16 @@ CloudFlare.define("instaflare", ["cloudflare/deferred", "cloudflare/iterator", "
             function sameZone(src, zone) {
                 var zoneRegExp = new RegExp(zone + '$')
                 var srcHostName = path.parseURL(path.resolveFullURL(src)).host
+                console.log("src host name is " + srcHostName);
                 return zoneRegExp.test(srcHostName)
             }
 
             var images = document.getElementsByTagName('img');
             var sliced = Array.prototype.slice.call(images);
             var queue = deferred.ref();
-            var zone = _config ? _config.zone : "unknown";
 
             iterator.forEach(sliced, function(image) {
-                if (sameZone(dom.getAttribute(image, 'src'), zone)) {
+                if (sameZone(dom.getAttribute(image, 'src'), config.zone)) {
 
                     var span = document.createElement("span"),
                         caption = document.createTextNode('Hipsterizing...');
